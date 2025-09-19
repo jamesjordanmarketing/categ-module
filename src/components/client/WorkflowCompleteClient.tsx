@@ -17,11 +17,11 @@ import {
   ArrowRight,
   Clock
 } from "lucide-react"
-import { useWorkflowStore, Document, TagDimension } from "../../stores/workflow-store"
+import { useWorkflowStore, Document as WorkflowDocument, TagDimension } from "../../stores/workflow-store"
 import { Progress } from "../ui/progress"
 
 interface Props {
-  document: Document
+  document: WorkflowDocument
   tagDimensions: TagDimension[]
   workflowSummary: {
     workflowId: string
@@ -97,13 +97,13 @@ export function WorkflowCompleteClient({ document, tagDimensions, workflowSummar
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
+        const a = globalThis.document.createElement('a')
         a.href = url
         a.download = `workflow_${workflowSummary.workflowId}.json`
-        document.body.appendChild(a)
+        globalThis.document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
+        globalThis.document.body.removeChild(a)
       }
     } catch (error) {
       console.error('Export failed:', error)

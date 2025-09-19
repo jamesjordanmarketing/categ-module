@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip@1.1.8";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
 import { cn } from "./utils";
 
@@ -13,7 +13,6 @@ const TooltipProvider = React.forwardRef<
 >(({ delayDuration = 0, ...props }, ref) => {
   return (
     <TooltipPrimitive.Provider
-      ref={ref}
       data-slot="tooltip-provider"
       delayDuration={delayDuration}
       {...props}
@@ -29,7 +28,7 @@ const Tooltip = React.forwardRef<
 >(({ ...props }, ref) => {
   return (
     <TooltipProvider>
-      <TooltipPrimitive.Root ref={ref} data-slot="tooltip" {...props} />
+      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
     </TooltipProvider>
   );
 });

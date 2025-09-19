@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Mock export data generation
-    const exportData = {
+    const exportData: any = {
       workflowId,
       exportedAt: new Date().toISOString(),
       format: format || 'json',

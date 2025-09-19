@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { mockCategories } from '../../../../data/mock-data'
+import { primaryCategories as mockCategories } from '../../../../data/mock-data'
 
 export async function GET(
   request: NextRequest,

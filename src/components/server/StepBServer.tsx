@@ -1,5 +1,5 @@
 import { StepBClient } from '../client/StepBClient'
-import { mockDocuments, mockCategories } from '../../data/mock-data'
+import { mockDocuments, primaryCategories as mockCategories } from '../../data/mock-data'
 
 async function getDocument(documentId: string) {
   await new Promise(resolve => setTimeout(resolve, 100))
