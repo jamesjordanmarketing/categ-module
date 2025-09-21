@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         
         const { data: draftData, error: draftError } = await supabase
           .from('workflow_sessions')
-          .upsert({
+          .insert({
             document_id: documentId,
             user_id: user.id,
             step: step || 'A',
@@ -123,8 +123,6 @@ export async function POST(request: NextRequest) {
             is_draft: true,
             completed_steps: [step || 'A'],
             updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'document_id,user_id'
           })
           .select()
           .single()
@@ -168,7 +166,7 @@ export async function POST(request: NextRequest) {
         // Submit complete workflow
         const { data: submitData, error: submitError } = await supabase
           .from('workflow_sessions')
-          .upsert({
+          .insert({
             document_id: documentId,
             user_id: user.id,
             step: 'complete',
@@ -180,8 +178,6 @@ export async function POST(request: NextRequest) {
             completed_steps: ['A', 'B', 'C'],
             completed_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'document_id,user_id'
           })
           .select()
           .single()

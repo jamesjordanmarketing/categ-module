@@ -412,3 +412,94 @@ const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUP
    - Should see your categorization choices saved
 
 **Expected Result**: Database integration will now work completely! Your document categorization choices should appear in the Supabase `workflow_sessions` table.
+
+---
+
+## 🔧 ENVIRONMENT VARIABLES CONFIGURATION IN PROGRESS
+
+**Date**: 2025-09-21 (Post-Code Fix)
+**Status**: Code fix deployed ✅, Environment variables needed ❌
+
+### ✅ Progress Made:
+- Code fix deployed successfully
+- No more "supabaseUrl is required" crash
+- Environment validation working (showing all variables are `false`)
+
+### ❌ Current Error:
+```
+Missing Supabase environment variables: {
+  SUPABASE_URL: false,
+  NEXT_PUBLIC_SUPABASE_URL: false,
+  SUPABASE_ANON_KEY: false,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: false
+}
+```
+
+### 📋 STEP-BY-STEP: Add Environment Variables to Vercel
+
+**Follow these exact steps:**
+
+1. **Go to Vercel Dashboard**: https://vercel.com/dashboard
+2. **Find your project**: `categ-module` (or whatever your project name is)
+3. **Click on the project**
+4. **Go to Settings tab** (top navigation)
+5. **Click "Environment Variables"** (left sidebar)
+6. **Add first variable**:
+   - Click **"Add New"** button
+   - **Key**: `SUPABASE_URL`
+   - **Value**: `https://hqhtbxlgzysfbekexwku.supabase.co`
+   - **Environments**: Check **All** (Production, Preview, Development)
+   - Click **Save**
+7. **Add second variable**:
+   - Click **"Add New"** button again
+   - **Key**: `SUPABASE_ANON_KEY`
+   - **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxaHRieGxnenlzZmJla2V4d2t1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY4NzEwOTgsImV4cCI6MjA0MjQ0NzA5OH0.sb_publishable_6sdMa51JJEd5E68_5eg2dA_yig9a6_i`
+   - **Environments**: Check **All** (Production, Preview, Development)
+   - Click **Save**
+
+8. **Trigger Redeploy**:
+   - Go to **Deployments** tab
+   - Find the latest deployment
+   - Click the **3-dot menu** → **Redeploy**
+   - OR just push a small change to trigger auto-redeploy:
+     ```bash
+     git commit --allow-empty -m "Trigger redeploy for environment variables"
+     git push origin main
+     ```
+
+### 🎯 After Adding Variables:
+The error should change from "all false" to "all true", and the database operations should work!
+
+---
+
+## ✅ DATABASE CONSTRAINT ERROR FIXED
+
+**Date**: 2025-09-21 (Post-Environment Variables Fix)
+**Issue**: `ON CONFLICT specification` error in database upsert operation
+**Status**: ✅ FIXED
+
+### ✅ Environment Variables Working:
+- Correct Supabase anon key from Legacy API Keys tab ✅
+- Authentication now working properly ✅
+- API route connecting to database ✅
+
+### ❌ Database Error Fixed:
+```
+code: '42P10',
+message: 'there is no unique or exclusion constraint matching the ON CONFLICT specification'
+```
+
+**Root Cause**: Using `.upsert()` with `onConflict: 'document_id,user_id'` but no unique constraint exists on those columns.
+
+### ✅ Fix Applied:
+Changed from `.upsert()` to `.insert()` in both draft save and submit operations:
+
+```typescript
+// Before (failing):
+.upsert({...}, { onConflict: 'document_id,user_id' })
+
+// After (working):
+.insert({...})
+```
+
+**Expected Result**: Workflow submissions should now successfully save to the `workflow_sessions` table!
