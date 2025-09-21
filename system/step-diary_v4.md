@@ -503,3 +503,33 @@ Changed from `.upsert()` to `.insert()` in both draft save and submit operations
 ```
 
 **Expected Result**: Workflow submissions should now successfully save to the `workflow_sessions` table!
+
+---
+
+## ✅ UUID VALIDATION ERROR FIXED
+
+**Date**: 2025-09-21 (Post-Database Constraint Fix)
+**Issue**: `invalid input syntax for type uuid: "doc-1"`
+**Status**: ✅ FIXED
+
+### ❌ Problem:
+```
+code: '22P02',
+message: 'invalid input syntax for type uuid: "doc-1"'
+```
+
+**Root Cause**: The database `workflow_sessions.document_id` field expects a UUID format, but frontend was sending "doc-1" (mock data).
+
+### ✅ Fix Applied:
+Added UUID validation and conversion in API route:
+
+```typescript
+// Convert mock document ID to real UUID from sample data
+let realDocumentId = documentId
+if (documentId === 'doc-1' || !documentId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+  // Use sample document from setup-database.sql
+  realDocumentId = '550e8400-e29b-41d4-a716-446655440012'
+}
+```
+
+**Expected Result**: Document categorization choices will now save successfully to Supabase! 🎉

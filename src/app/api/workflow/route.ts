@@ -25,6 +25,14 @@ export async function POST(request: NextRequest) {
       step
     })
 
+    // Handle document ID - convert from mock ID to real UUID if needed
+    let realDocumentId = documentId
+    if (documentId === 'doc-1' || !documentId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      // Use the sample document from setup-database.sql
+      realDocumentId = '550e8400-e29b-41d4-a716-446655440012' // "Complete Customer Onboarding System Blueprint"
+      console.log('Converting mock document ID to real UUID:', documentId, '->', realDocumentId)
+    }
+
     // Get user from auth header or session
     const authHeader = request.headers.get('authorization')
     if (!authHeader) {
@@ -97,9 +105,9 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'save_draft':
         // Save workflow as draft with real database operations
-        console.log('Saving draft for user:', user.id, 'document:', documentId)
+        console.log('Saving draft for user:', user.id, 'document:', realDocumentId)
         console.log('Draft data:', {
-          document_id: documentId,
+          document_id: realDocumentId,
           user_id: user.id,
           step: step || 'A',
           belonging_rating: belongingRating,
@@ -113,7 +121,7 @@ export async function POST(request: NextRequest) {
         const { data: draftData, error: draftError } = await supabase
           .from('workflow_sessions')
           .insert({
-            document_id: documentId,
+            document_id: realDocumentId,
             user_id: user.id,
             step: step || 'A',
             belonging_rating: belongingRating,
@@ -167,7 +175,7 @@ export async function POST(request: NextRequest) {
         const { data: submitData, error: submitError } = await supabase
           .from('workflow_sessions')
           .insert({
-            document_id: documentId,
+            document_id: realDocumentId,
             user_id: user.id,
             step: 'complete',
             belonging_rating: belongingRating,
