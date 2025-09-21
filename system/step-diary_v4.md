@@ -301,3 +301,40 @@ setIsLoading(false) // Always reached
 5. **Test workflow**: Once auth is working, database operations should work too
 
 **This fix should resolve both the spinning issue AND potentially fix the database insertion problem by ensuring proper authentication context.**
+
+---
+
+## 🐛 API 500 ERROR DEBUGGING - IN PROGRESS
+
+**Date**: 2025-09-21 (Post-Authentication Fix)
+**Issue**: API endpoint returning 500 Internal Server Error when submitting workflow
+**Status**: 🔍 DEBUGGING - Added extensive logging
+
+### ✅ Authentication Working:
+- App loads properly (no more spinning) ✅
+- User can sign in successfully ✅ 
+- JWT token is being passed correctly ✅
+- Token format: `Bearer eyJhbGciOiJIUzI1NiIs...` ✅
+
+### ❌ API Route Failing:
+- **Status**: 500 Internal Server Error
+- **URL**: `https://categ-module.vercel.app/api/workflow`
+- **Method**: POST
+- **Payload**: Valid data structure with all required fields
+
+### 🔍 Debugging Added to `/src/app/api/workflow/route.ts`:
+
+1. **Request logging**: Full request body and parsed values
+2. **Token logging**: First 50 characters of JWT token
+3. **User authentication logging**: User ID extraction
+4. **Database operation logging**: Draft data being saved
+5. **Enhanced error logging**: Detailed error messages, codes, stack traces
+
+### 📊 Next Steps:
+
+1. **Deploy debugging version** to Vercel
+2. **Test workflow submission** again
+3. **Check Vercel Function logs** for detailed error messages
+4. **Identify exact failure point**: Auth, RLS policies, or database constraints
+
+**Expected Result**: Vercel logs will show exactly where the 500 error is occurring and why.

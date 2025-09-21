@@ -3,7 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('=== WORKFLOW API CALLED ===')
     const body = await request.json()
+    console.log('Request body:', JSON.stringify(body, null, 2))
     
     const { 
       documentId, 
@@ -14,6 +16,14 @@ export async function POST(request: NextRequest) {
       action,
       step
     } = body
+    
+    console.log('Parsed values:', {
+      documentId,
+      belongingRating,
+      selectedCategory: selectedCategory?.id || 'none',
+      action,
+      step
+    })
 
     // Get user from auth header or session
     const authHeader = request.headers.get('authorization')
@@ -26,6 +36,7 @@ export async function POST(request: NextRequest) {
 
     // Extract user from token
     const token = authHeader.replace('Bearer ', '')
+    console.log('Token received:', token.substring(0, 50) + '...')
     
     // Create Supabase client with user's JWT token for RLS policies
     const supabase = createClient(
@@ -40,14 +51,18 @@ export async function POST(request: NextRequest) {
       }
     )
     
+    console.log('Getting user from token...')
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)
     
     if (userError || !user) {
+      console.error('User authentication error:', userError)
       return NextResponse.json(
         { error: 'Invalid authentication', success: false },
         { status: 401 }
       )
     }
+    
+    console.log('User authenticated:', user.id)
 
     if (!documentId || !action) {
       return NextResponse.json(
@@ -59,6 +74,19 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'save_draft':
         // Save workflow as draft with real database operations
+        console.log('Saving draft for user:', user.id, 'document:', documentId)
+        console.log('Draft data:', {
+          document_id: documentId,
+          user_id: user.id,
+          step: step || 'A',
+          belonging_rating: belongingRating,
+          selected_category_id: selectedCategory?.id,
+          selected_tags: selectedTags || {},
+          custom_tags: customTags || [],
+          is_draft: true,
+          completed_steps: [step || 'A']
+        })
+        
         const { data: draftData, error: draftError } = await supabase
           .from('workflow_sessions')
           .upsert({
@@ -80,11 +108,23 @@ export async function POST(request: NextRequest) {
 
         if (draftError) {
           console.error('Draft save error:', draftError)
+          console.error('Draft error details:', {
+            code: draftError.code,
+            message: draftError.message,
+            details: draftError.details,
+            hint: draftError.hint
+          })
           return NextResponse.json(
-            { error: 'Failed to save draft', success: false },
+            { 
+              error: 'Failed to save draft', 
+              success: false,
+              details: draftError.message
+            },
             { status: 500 }
           )
         }
+        
+        console.log('Draft saved successfully:', draftData?.id)
 
         return NextResponse.json({
           message: 'Draft saved successfully',
@@ -173,8 +213,17 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Workflow API Error:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      name: error instanceof Error ? error.name : 'Unknown',
+    })
     return NextResponse.json(
-      { error: 'Workflow operation failed', success: false },
+      { 
+        error: 'Workflow operation failed', 
+        success: false,
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
