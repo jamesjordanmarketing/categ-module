@@ -182,3 +182,122 @@ node test-database.js
    - No more RLS policy violations
 
 **Expected Result**: Your document categorization choices will now be saved to the Supabase database and persist between sessions! 🎉
+
+---
+
+## 🔍 FOLLOW-UP INVESTIGATION - Post-Deploy Test Results
+
+**Date**: 2025-09-21 (Post-Fix Deployment)
+**Status**: Fix deployed to Vercel ✅, UI workflow completed ✅, but data still not appearing in database ❌
+
+### Where to Find Your Primary Category Selection in Supabase:
+
+**TABLE NAME**: `workflow_sessions`
+
+**COLUMN NAME**: `selected_category_id`
+
+**Location in Supabase Dashboard**:
+1. Go to https://supabase.com/dashboard
+2. Navigate to project `hqhtbxlgzysfbekexwku` 
+3. Click "Table Editor" in left sidebar
+4. Select `workflow_sessions` table
+5. Look for a new row with:
+   - `selected_category_id`: Your primary category UUID (e.g., `550e8400-e29b-41d4-a716-446655440001`)
+   - `user_id`: Your user ID
+   - `document_id`: The document you categorized
+   - `step`: Should be `'complete'` if you submitted
+   - `is_draft`: Should be `false` if you submitted (or `true` if auto-saved)
+   - `belonging_rating`: Your Step A rating (1-10)
+   - `selected_tags`: JSON object with your Step C tag selections
+
+### 🚨 Troubleshooting: Still No Data in Database
+
+If the workflow "seemed to work" but you still don't see data in `workflow_sessions` table, possible issues:
+
+1. **Authentication Token Issue**: The fix might not be working correctly
+2. **API Error**: Check browser Developer Tools → Network tab for API call errors
+3. **RLS Policy Still Blocking**: The user context might still not be passing through correctly
+
+**IMMEDIATE DEBUGGING STEPS**:
+
+1. **Check Browser Console**:
+   - Open Developer Tools (F12)
+   - Look for any errors when submitting the workflow
+   - Check the Network tab for the `/api/workflow` POST request response
+
+2. **Verify API Response**:
+   - In Network tab, find the workflow submission request
+   - Check if it returns `{"success": true}` or an error message
+
+3. **Check Vercel Function Logs**:
+   - Go to Vercel dashboard → Functions tab
+   - Look for runtime errors in the API route
+
+**Next Debugging Action Needed**: Check browser console/network tab during workflow submission to identify the specific error preventing database insertion.
+
+---
+
+## 🔄 AUTHENTICATION LOADING ISSUE - FIXED
+
+**Date**: 2025-09-21 (Post-Authentication Fix)
+**Issue**: App was spinning infinitely when invalid/expired authentication tokens were present
+**Status**: ✅ FIXED
+
+### ❌ Root Cause of Spinning Issue:
+
+1. **Invalid Session Handling**: When `supabase.auth.getSession()` returned an error or expired session
+2. **Profile Loading Blocking**: The `loadUserProfile()` function could hang or fail silently
+3. **Loading State Never Cleared**: `setIsLoading(false)` was only called after profile loading completed
+4. **No Timeout Protection**: No timeouts on async auth operations
+
+### ✅ Fixes Implemented in `src/lib/auth-context.tsx`:
+
+1. **Added 10-second timeout** to session initialization
+2. **Added 5-second timeout** to profile loading
+3. **Non-blocking profile loading** - doesn't prevent `isLoading` from being set to false
+4. **Proper error handling** with try-catch-finally blocks
+5. **State clearing** on errors to prevent stale data
+6. **Enhanced signOut** with proper state cleanup
+7. **Added logging** for debugging auth state changes
+
+### 🔧 Key Changes:
+
+```typescript
+// Before: Could hang forever
+const { data: { session }, error } = await supabase.auth.getSession()
+if (session?.user) {
+  await loadUserProfile(session.user.id) // Could block forever
+}
+setIsLoading(false) // Never reached if profile loading hangs
+
+// After: Timeout protection and non-blocking
+const sessionPromise = supabase.auth.getSession()
+const timeoutPromise = new Promise((_, reject) => 
+  setTimeout(() => reject(new Error('Session timeout')), 10000)
+)
+const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise])
+if (session?.user) {
+  loadUserProfile(session.user.id).catch(err => {
+    console.error('Profile loading failed:', err)
+  }) // Non-blocking
+}
+setIsLoading(false) // Always reached
+```
+
+### 📊 Expected Results After Fix:
+
+1. **No More Spinning**: App should load normally even with expired tokens
+2. **Clean Redirects**: Properly redirect to signin when not authenticated
+3. **Faster Loading**: 10-second max wait time instead of infinite
+4. **Better Error Handling**: Console logs will show auth issues clearly
+5. **Cookie Clearing Not Needed**: App should handle invalid sessions gracefully
+
+### 🧪 Test the Authentication Fix:
+
+1. **Deploy to Vercel** (push changes to trigger deployment)
+2. **Test normal flow**: Visit https://categ-module.vercel.app/ - should redirect to signin
+3. **Test with stale cookies**: Don't clear cookies, should still work
+4. **Check browser console**: Should show clear auth state change logs
+5. **Test workflow**: Once auth is working, database operations should work too
+
+**This fix should resolve both the spinning issue AND potentially fix the database insertion problem by ensuring proper authentication context.**

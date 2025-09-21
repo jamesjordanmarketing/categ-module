@@ -31,19 +31,43 @@ export function AuthProvider({
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session with timeout
     const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      if (error) {
-        console.error('Error getting session:', error)
-      } else {
-        setSession(session)
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          await loadUserProfile(session.user.id)
+      try {
+        // Add timeout to prevent hanging
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 10000)
+        )
+        
+        const { data: { session }, error } = await Promise.race([sessionPromise, timeoutPromise]) as any
+        
+        if (error) {
+          console.error('Error getting session:', error)
+          // Clear any stale session data
+          setSession(null)
+          setUser(null)
+          setProfile(null)
+        } else {
+          setSession(session)
+          setUser(session?.user ?? null)
+          if (session?.user) {
+            // Load profile but don't block on it
+            loadUserProfile(session.user.id).catch(err => {
+              console.error('Profile loading failed:', err)
+            })
+          }
         }
+      } catch (error) {
+        console.error('Session initialization failed:', error)
+        // Clear any stale data
+        setSession(null)
+        setUser(null)
+        setProfile(null)
+      } finally {
+        // Always set loading to false
+        setIsLoading(false)
       }
-      setIsLoading(false)
     }
 
     getSession()
@@ -51,14 +75,21 @@ export function AuthProvider({
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id)
+        
         setSession(session)
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          await loadUserProfile(session.user.id)
+          // Load profile but don't block the loading state on it
+          loadUserProfile(session.user.id).catch(err => {
+            console.error('Profile loading failed during auth change:', err)
+          })
         } else {
           setProfile(null)
         }
+        
+        // Always set loading to false
         setIsLoading(false)
       }
     )
@@ -68,19 +99,34 @@ export function AuthProvider({
 
   const loadUserProfile = async (userId: string) => {
     try {
-      const { data: profile, error } = await supabase
+      // Add timeout to profile loading to prevent hanging
+      const profilePromise = supabase
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
         .single()
+        
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile loading timeout')), 5000)
+      )
+      
+      const { data: profile, error } = await Promise.race([profilePromise, timeoutPromise]) as any
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading user profile:', error)
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No profile found - this is normal for new users
+          console.log('No user profile found, user may need to complete setup')
+          setProfile(null)
+        } else {
+          console.error('Error loading user profile:', error)
+          setProfile(null)
+        }
       } else {
         setProfile(profile)
       }
     } catch (error) {
-      console.error('Error loading user profile:', error)
+      console.error('Profile loading failed:', error)
+      setProfile(null)
     }
   }
 
@@ -139,9 +185,24 @@ export function AuthProvider({
 
   const signOut = async () => {
     try {
+      // Set loading to true during signout
+      setIsLoading(true)
+      
       await supabase.auth.signOut()
+      
+      // Clear all state immediately
+      setSession(null)
+      setUser(null)
+      setProfile(null)
+      
     } catch (error) {
       console.error('Error signing out:', error)
+      // Still clear state even if signOut fails
+      setSession(null)
+      setUser(null)
+      setProfile(null)
+    } finally {
+      setIsLoading(false)
     }
   }
 
