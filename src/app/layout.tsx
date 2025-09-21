@@ -1,4 +1,4 @@
-import { AuthProvider } from '@brighthub/auth-module'
+import { AuthProvider } from '../lib/auth-context'
 import './globals.css'
 import { Toaster } from "../components/ui/sonner"
 
@@ -16,8 +16,6 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider
-          supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!}
-          supabaseKey={process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}
           redirectTo="/dashboard"
         >
           {children}

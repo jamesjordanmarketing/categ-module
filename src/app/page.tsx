@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@brighthub/auth-module'
+import { useAuth } from '../lib/auth-context'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 

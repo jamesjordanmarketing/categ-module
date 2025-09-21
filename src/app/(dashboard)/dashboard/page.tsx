@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@brighthub/auth-module'
+import { useAuth } from '../../../lib/auth-context'
 import { DocumentSelectorServer } from '../../../components/server/DocumentSelectorServer'
 
 export default function DashboardPage() {
