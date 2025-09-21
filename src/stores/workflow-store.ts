@@ -79,9 +79,10 @@ export interface WorkflowState {
   addCustomTag: (dimensionId: string, tag: Tag) => void;
   markStepComplete: (step: string) => void;
   validateStep: (step: string) => boolean;
-  saveDraft: () => void;
+  saveDraft: () => Promise<void>;
   resetWorkflow: () => void;
   submitWorkflow: () => Promise<void>;
+  loadExistingWorkflow: (documentId: string) => Promise<void>;
 }
 
 export const useWorkflowStore = create<WorkflowState>()(
@@ -110,19 +111,22 @@ export const useWorkflowStore = create<WorkflowState>()(
 
       setBelongingRating: (rating) => {
         set({ belongingRating: rating, isDraft: true });
-        get().saveDraft();
+        // Call async saveDraft but don't await to avoid blocking
+        get().saveDraft().catch(error => console.error('Auto-save failed:', error));
       },
 
       setSelectedCategory: (category) => {
         set({ selectedCategory: category, isDraft: true });
-        get().saveDraft();
+        // Call async saveDraft but don't await to avoid blocking
+        get().saveDraft().catch(error => console.error('Auto-save failed:', error));
       },
 
       setSelectedTags: (dimensionId, tags) => {
         const selectedTags = { ...get().selectedTags };
         selectedTags[dimensionId] = tags;
         set({ selectedTags, isDraft: true });
-        get().saveDraft();
+        // Call async saveDraft but don't await to avoid blocking
+        get().saveDraft().catch(error => console.error('Auto-save failed:', error));
       },
 
       addCustomTag: (dimensionId, tag) => {
@@ -133,7 +137,8 @@ export const useWorkflowStore = create<WorkflowState>()(
         }
         selectedTags[dimensionId].push(tag.id);
         set({ customTags, selectedTags, isDraft: true });
-        get().saveDraft();
+        // Call async saveDraft but don't await to avoid blocking
+        get().saveDraft().catch(error => console.error('Auto-save failed:', error));
       },
 
       markStepComplete: (step) => {
@@ -174,11 +179,57 @@ export const useWorkflowStore = create<WorkflowState>()(
         return Object.keys(errors).length === 0;
       },
 
-      saveDraft: () => {
-        set({ 
-          isDraft: true, 
-          lastSaved: new Date().toISOString() 
-        });
+      saveDraft: async () => {
+        const state = get();
+        
+        try {
+          // Get auth token from Supabase auth
+          let token = null;
+          try {
+            const { supabase } = await import('../lib/supabase');
+            const { data: { session } } = await supabase.auth.getSession();
+            token = session?.access_token;
+          } catch (e) {
+            console.warn('Could not get auth token from Supabase session');
+          }
+          
+          if (!token) {
+            console.warn('User not authenticated, cannot save draft');
+            return;
+          }
+          
+          // Make real API call to save draft
+          const response = await fetch('/api/workflow', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+              action: 'save_draft',
+              documentId: state.currentDocument?.id,
+              belongingRating: state.belongingRating,
+              selectedCategory: state.selectedCategory,
+              selectedTags: state.selectedTags,
+              customTags: state.customTags,
+              step: state.currentStep
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+              set({ 
+                isDraft: true, 
+                lastSaved: new Date().toISOString() 
+              });
+            }
+          } else {
+            console.error('Failed to save draft');
+          }
+        } catch (error) {
+          console.error('Error saving draft:', error);
+        }
       },
 
       resetWorkflow: () => {
@@ -198,16 +249,115 @@ export const useWorkflowStore = create<WorkflowState>()(
       submitWorkflow: async () => {
         const state = get();
         
-        // Simulate API submission
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        try {
+          // Get auth token from Supabase auth
+          let token = null;
+          try {
+            const { supabase } = await import('../lib/supabase');
+            const { data: { session } } = await supabase.auth.getSession();
+            token = session?.access_token;
+          } catch (e) {
+            console.warn('Could not get auth token from Supabase session');
+          }
+          
+          if (!token) {
+            throw new Error('User not authenticated');
+          }
         
-        // Mark as complete
-        set({ 
-          currentStep: 'complete',
-          isDraft: false,
-          completedSteps: ['A', 'B', 'C'],
-          lastSaved: new Date().toISOString()
-        });
+          // Make real API call to submit workflow
+          const response = await fetch('/api/workflow', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+              action: 'submit',
+              documentId: state.currentDocument?.id,
+              belongingRating: state.belongingRating,
+              selectedCategory: state.selectedCategory,
+              selectedTags: state.selectedTags,
+              customTags: state.customTags,
+              step: state.currentStep
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to submit workflow');
+          }
+
+          const data = await response.json();
+          
+          if (data.success) {
+            // Mark as complete
+            set({ 
+              currentStep: 'complete',
+              isDraft: false,
+              completedSteps: ['A', 'B', 'C'],
+              lastSaved: new Date().toISOString()
+            });
+          } else {
+            throw new Error(data.error || 'Submission failed');
+          }
+        } catch (error) {
+          console.error('Failed to submit workflow:', error);
+          throw error;
+        }
+      },
+
+      loadExistingWorkflow: async (documentId: string) => {
+        try {
+          // Get auth token from Supabase auth
+          let token = null;
+          try {
+            const { supabase } = await import('../lib/supabase');
+            const { data: { session } } = await supabase.auth.getSession();
+            token = session?.access_token;
+          } catch (e) {
+            console.warn('Could not get auth token from Supabase session');
+          }
+          
+          if (!token) {
+            console.warn('User not authenticated, cannot load existing workflow');
+            return;
+          }
+          
+          // Check if there's an existing workflow session for this document
+          const response = await fetch(`/api/workflow/session?documentId=${documentId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.session) {
+              const session = data.session;
+              // Load the existing workflow state
+              set({
+                currentStep: session.step as 'A' | 'B' | 'C' | 'complete',
+                belongingRating: session.belonging_rating,
+                selectedCategory: session.selected_category_id ? {
+                  id: session.selected_category_id,
+                  // We'd need to fetch category details, for now just use basic info
+                  name: 'Loaded Category',
+                  description: '',
+                  examples: [],
+                  isHighValue: false,
+                  impact: ''
+                } : null,
+                selectedTags: session.selected_tags || {},
+                customTags: session.custom_tags || [],
+                completedSteps: session.completed_steps || [],
+                isDraft: session.is_draft,
+                lastSaved: session.updated_at
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error loading existing workflow:', error);
+        }
       },
     }),
     {

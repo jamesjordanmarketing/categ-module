@@ -165,6 +165,21 @@ export const workflowService = {
     
     if (error) throw error;
     return data;
+  },
+
+  // Get user's workflow sessions
+  async getUserSessions(userId: string) {
+    const { data, error } = await supabase
+      .from('workflow_sessions')
+      .select(`
+        *,
+        documents (*)
+      `)
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
   }
 };
 

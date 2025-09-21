@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { primaryCategories as mockCategories } from '../../../data/mock-data'
+import { supabase } from '../../../lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,18 +7,40 @@ export async function GET(request: NextRequest) {
     const highValue = searchParams.get('highValue')
     const includeAnalytics = searchParams.get('includeAnalytics') === 'true'
     
-    let categories = [...mockCategories]
+    let query = supabase
+      .from('categories')
+      .select('*')
+      .order('sort_order', { ascending: true })
 
     // Apply high value filter
     if (highValue === 'true') {
-      categories = categories.filter(cat => cat.isHighValue)
+      query = query.eq('is_high_value', true)
     } else if (highValue === 'false') {
-      categories = categories.filter(cat => !cat.isHighValue)
+      query = query.eq('is_high_value', false)
     }
+
+    const { data: categories, error } = await query
+
+    if (error) {
+      console.error('Categories fetch error:', error)
+      return NextResponse.json(
+        { error: 'Failed to fetch categories', success: false },
+        { status: 500 }
+      )
+    }
+
+    let transformedCategories = (categories || []).map(category => ({
+      id: category.id,
+      name: category.name,
+      description: category.description,
+      examples: category.examples,
+      isHighValue: category.is_high_value,
+      impact: category.impact_description,
+    }))
 
     // Add analytics data if requested
     if (includeAnalytics) {
-      categories = categories.map(category => ({
+      transformedCategories = transformedCategories.map(category => ({
         ...category,
         usageAnalytics: {
           totalSelections: Math.floor(Math.random() * 1000) + 100,
@@ -33,11 +55,12 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      categories,
-      total: categories.length,
+      categories: transformedCategories,
+      total: transformedCategories.length,
       success: true
     })
   } catch (error) {
+    console.error('Categories API Error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch categories', success: false },
       { status: 500 }
