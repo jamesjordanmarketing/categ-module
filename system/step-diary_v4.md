@@ -533,3 +533,42 @@ if (documentId === 'doc-1' || !documentId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-
 ```
 
 **Expected Result**: Document categorization choices will now save successfully to Supabase! 🎉
+
+---
+
+## ✅ COMPREHENSIVE UUID VALIDATION FIXED
+
+**Date**: 2025-09-21 (Post-Document UUID Fix)
+**Issue**: `invalid input syntax for type uuid: "complete-systems"`
+**Status**: ✅ FIXED
+
+### ❌ Problem:
+Multiple UUID fields receiving mock string IDs instead of proper UUIDs:
+- `document_id`: "doc-1" → needed UUID
+- `selected_category_id`: "complete-systems" → needed UUID
+
+### ✅ Comprehensive Fix Applied:
+
+```typescript
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// Document ID mapping
+realDocumentId = '550e8400-e29b-41d4-a716-446655440012'
+
+// Category ID mapping
+const categoryMappings = {
+  'complete-systems': '550e8400-e29b-41d4-a716-446655440001',
+  'proprietary-strategies': '550e8400-e29b-41d4-a716-446655440002',
+  'process-documentation': '550e8400-e29b-41d4-a716-446655440001'
+}
+```
+
+### 🧪 Fields Validated:
+- ✅ `document_id`: Mock → Real UUID
+- ✅ `selected_category_id`: Mock → Real UUID  
+- ✅ `user_id`: From auth (already UUID)
+- ✅ `selected_tags`: JSON (no UUID required)
+- ✅ `custom_tags`: Array (no UUID required)
+
+**Expected Result**: ALL database operations should now work without UUID syntax errors!

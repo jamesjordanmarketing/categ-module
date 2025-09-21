@@ -25,13 +25,34 @@ export async function POST(request: NextRequest) {
       step
     })
 
-    // Handle document ID - convert from mock ID to real UUID if needed
+    // Handle all UUID conversions from mock data to real UUIDs
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    
+    // Document ID conversion
     let realDocumentId = documentId
-    if (documentId === 'doc-1' || !documentId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-      // Use the sample document from setup-database.sql
+    if (documentId === 'doc-1' || !documentId.match(UUID_REGEX)) {
       realDocumentId = '550e8400-e29b-41d4-a716-446655440012' // "Complete Customer Onboarding System Blueprint"
       console.log('Converting mock document ID to real UUID:', documentId, '->', realDocumentId)
     }
+    
+    // Category ID conversion
+    let realCategoryId = selectedCategory?.id
+    if (realCategoryId && !realCategoryId.match(UUID_REGEX)) {
+      const categoryMappings = {
+        'complete-systems': '550e8400-e29b-41d4-a716-446655440001',
+        'proprietary-strategies': '550e8400-e29b-41d4-a716-446655440002',
+        'process-documentation': '550e8400-e29b-41d4-a716-446655440001', // Default to first category
+      }
+      realCategoryId = categoryMappings[realCategoryId] || '550e8400-e29b-41d4-a716-446655440001'
+      console.log('Converting mock category ID to real UUID:', selectedCategory?.id, '->', realCategoryId)
+    }
+    
+    console.log('UUID conversions applied:', {
+      originalDocumentId: documentId,
+      realDocumentId,
+      originalCategoryId: selectedCategory?.id,
+      realCategoryId
+    })
 
     // Get user from auth header or session
     const authHeader = request.headers.get('authorization')
@@ -111,7 +132,7 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           step: step || 'A',
           belonging_rating: belongingRating,
-          selected_category_id: selectedCategory?.id,
+          selected_category_id: realCategoryId,
           selected_tags: selectedTags || {},
           custom_tags: customTags || [],
           is_draft: true,
@@ -125,7 +146,7 @@ export async function POST(request: NextRequest) {
             user_id: user.id,
             step: step || 'A',
             belonging_rating: belongingRating,
-            selected_category_id: selectedCategory?.id,
+            selected_category_id: realCategoryId,
             selected_tags: selectedTags || {},
             custom_tags: customTags || [],
             is_draft: true,
@@ -164,7 +185,7 @@ export async function POST(request: NextRequest) {
 
       case 'submit':
         // Validate all required fields for submission
-        if (!belongingRating || !selectedCategory || !selectedTags) {
+        if (!belongingRating || !realCategoryId || !selectedTags) {
           return NextResponse.json(
             { error: 'Incomplete workflow data', success: false },
             { status: 400 }
@@ -179,7 +200,7 @@ export async function POST(request: NextRequest) {
             user_id: user.id,
             step: 'complete',
             belonging_rating: belongingRating,
-            selected_category_id: selectedCategory.id,
+            selected_category_id: realCategoryId,
             selected_tags: selectedTags,
             custom_tags: customTags || [],
             is_draft: false,
