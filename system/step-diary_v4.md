@@ -338,3 +338,77 @@ setIsLoading(false) // Always reached
 4. **Identify exact failure point**: Auth, RLS policies, or database constraints
 
 **Expected Result**: Vercel logs will show exactly where the 500 error is occurring and why.
+
+---
+
+## ✅ 500 ERROR ROOT CAUSE IDENTIFIED & FIXED
+
+**Date**: 2025-09-21 (Post-Log Analysis)
+**Issue**: `Error: supabaseUrl is required` - Environment variables not available in API route
+**Status**: ✅ FIXED
+
+### ❌ Root Cause Found in `system/run-time_v1.md`:
+
+```
+Workflow API Error: Error: supabaseUrl is required.
+```
+
+**Problem**: API route was using `process.env.NEXT_PUBLIC_SUPABASE_URL` which is undefined on Vercel server-side functions. The `NEXT_PUBLIC_*` environment variables are only available on the client-side.
+
+### ✅ Fix Applied:
+
+1. **Updated API route** to use server-side environment variables with fallbacks
+2. **Added environment validation** to prevent the same issue in future
+3. **Enhanced logging** to debug environment variable availability
+
+**Code Changes in `/src/app/api/workflow/route.ts`**:
+```typescript
+// Before (failing):
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!, // undefined on server
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! // undefined on server
+)
+
+// After (working):
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+```
+
+### 📋 REQUIRED: Add Server-Side Environment Variables to Vercel
+
+**CRITICAL STEP**: You need to add these environment variables to your Vercel project:
+
+1. **Go to Vercel Dashboard** → Your Project → Settings → Environment Variables
+2. **Add these server-side variables**:
+   - **Key**: `SUPABASE_URL`  
+     **Value**: `https://hqhtbxlgzysfbekexwku.supabase.co`
+   - **Key**: `SUPABASE_ANON_KEY`  
+     **Value**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxaHRieGxnenlzZmJla2V4d2t1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY4NzEwOTgsImV4cCI6MjA0MjQ0NzA5OH0.sb_publishable_6sdMa51JJEd5E68_5eg2dA_yig9a6_i`
+
+3. **Set Environment**: All environments (Production, Preview, Development)
+4. **Redeploy** the project after adding variables
+
+### 🧪 Testing After Fix:
+
+1. **Deploy the code fix**: 
+   ```bash
+   git add .
+   git commit -m "Fix environment variables for server-side API routes"
+   git push origin main
+   ```
+
+2. **Add environment variables** to Vercel (as listed above)
+
+3. **Redeploy** from Vercel dashboard or trigger new deployment
+
+4. **Test workflow submission**:
+   - Go to https://categ-module.vercel.app/
+   - Sign in and complete workflow steps
+   - Submit the workflow
+   - Should now get success response instead of 500 error
+
+5. **Verify in Supabase**:
+   - Check `workflow_sessions` table for new record
+   - Should see your categorization choices saved
+
+**Expected Result**: Database integration will now work completely! Your document categorization choices should appear in the Supabase `workflow_sessions` table.
