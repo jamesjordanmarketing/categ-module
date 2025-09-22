@@ -35,13 +35,33 @@ export async function POST(request: NextRequest) {
       console.log('Converting mock document ID to real UUID:', documentId, '->', realDocumentId)
     }
     
-    // Category ID conversion
+    // Category ID conversion - Complete mapping for all 10 categories
     let realCategoryId = selectedCategory?.id
     if (realCategoryId && !realCategoryId.match(UUID_REGEX)) {
       const categoryMappings = {
+        // Original categories (already exist in database)
+        'complete-systems-&-methodologies': '550e8400-e29b-41d4-a716-446655440001',
+        'proprietary-strategies-&-approaches': '550e8400-e29b-41d4-a716-446655440002',
+        // New categories (added by migration)
+        'process-documentation-&-workflows': '550e8400-e29b-41d4-a716-446655440013',
+        'customer-insights-&-case-studies': '550e8400-e29b-41d4-a716-446655440014',
+        'market-research-&-competitive-intelligence': '550e8400-e29b-41d4-a716-446655440015',
+        'sales-enablement-&-customer-facing-content': '550e8400-e29b-41d4-a716-446655440016',
+        'training-materials-&-educational-content': '550e8400-e29b-41d4-a716-446655440017',
+        'knowledge-base-&-reference-materials': '550e8400-e29b-41d4-a716-446655440018',
+        'communication-templates-&-messaging': '550e8400-e29b-41d4-a716-446655440019',
+        'project-artifacts-&-deliverables': '550e8400-e29b-41d4-a716-446655440020',
+        // Legacy mappings (for backward compatibility)
         'complete-systems': '550e8400-e29b-41d4-a716-446655440001',
         'proprietary-strategies': '550e8400-e29b-41d4-a716-446655440002',
-        'process-documentation': '550e8400-e29b-41d4-a716-446655440001', // Default to first category
+        'process-documentation': '550e8400-e29b-41d4-a716-446655440013',
+        'customer-insights': '550e8400-e29b-41d4-a716-446655440014',
+        'market-research': '550e8400-e29b-41d4-a716-446655440015',
+        'sales-enablement': '550e8400-e29b-41d4-a716-446655440016',
+        'training-materials': '550e8400-e29b-41d4-a716-446655440017',
+        'knowledge-base': '550e8400-e29b-41d4-a716-446655440018',
+        'communication-templates': '550e8400-e29b-41d4-a716-446655440019',
+        'project-artifacts': '550e8400-e29b-41d4-a716-446655440020'
       }
       realCategoryId = categoryMappings[realCategoryId] || '550e8400-e29b-41d4-a716-446655440001'
       console.log('Converting mock category ID to real UUID:', selectedCategory?.id, '->', realCategoryId)

@@ -469,3 +469,66 @@ GROUP BY td.name;
 5. **Documentation**: Brief summary of changes made and verification steps completed
 
 **Execute this specification completely to resolve the critical UI vs database disconnection issue.**
+
+## Human Operator Installation Instructions
+
+### **STEP 1: Execute Database Migration**
+1. Open browser → Go to https://supabase.com/dashboard
+2. Login to your account
+3. Select your project → Click "SQL Editor" in left sidebar
+4. Click "New Query"
+5. Copy entire contents of `migration-master-data.sql`
+6. Paste into SQL Editor
+7. Click "Run" button
+8. Verify success message: "Master data migration completed successfully!"
+
+### **STEP 2: Verify Migration Success**
+```bash
+# Run verification test
+node test-master-data.js
+```
+**Expected Output:**
+- ✅ Found 10 categories
+- ✅ Found 7 tag dimensions  
+- ✅ Found ~43 tags
+- ✅ Category name matches: 10/10
+- ✅ Dimension name matches: 7/7
+
+### **STEP 3: Test Code Changes Locally**
+```bash
+# Start development server
+npm run dev
+
+# In new terminal, test database connection
+node test-database.js
+```
+
+### **STEP 4: Verify Live Application**
+1. Open https://categ-module.vercel.app/
+2. Sign in with existing account
+3. Start new workflow
+4. **Step B**: Verify all 10 categories appear
+5. **Step C**: Verify all 7 tag dimensions with complete tag lists
+6. Complete full workflow (A → B → C → Submit)
+
+### **STEP 5: Verify Database Storage**
+1. Go back to Supabase Dashboard → SQL Editor
+2. Run verification query:
+```sql
+SELECT COUNT(*) FROM workflow_sessions WHERE step = 'complete';
+```
+3. Should show completed workflow sessions
+
+### **STEP 6: Deploy to Production**
+```bash
+# Commit and push changes (auto-deploys via Vercel)
+git add .
+git commit -m "Fix: UI now loads from database instead of mock data"
+git push origin main
+```
+
+### **Troubleshooting:**
+- **Migration fails**: Check for duplicate UUIDs, re-run script
+- **UI shows mock data**: Check console for database errors, verify Supabase connection
+- **Categories not mapping**: Check `workflow/route.ts` UUID mappings
+- **Test failures**: Run `node test-master-data.js` to identify missing data
