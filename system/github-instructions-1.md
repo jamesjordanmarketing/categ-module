@@ -114,6 +114,84 @@ git reset --hard origin/main
 3. Pull latest changes: `git pull`
 4. Resolve any merge conflicts if they occur
 
+
+
+
+
+## Pull from remote to new local
+
+### Step-by-Step Instructions: GitHub Repository → New Local Folder
+
+#### Step 1: Navigate to Your Desired Location
+```bash
+# Navigate to where you want to create the project folder
+cd /path/to/your/workspace
+
+# Example: Navigate to your projects directory
+cd ~/Documents/Projects
+```
+
+#### Step 2: Clone the Repository
+```bash
+# Clone the repository (this creates a new folder automatically)
+git clone https://github.com/username/repository-name.git
+
+# Example:
+git clone https://github.com/jamesjordanmarketing/br-kombai-7.git
+```
+
+#### Step 3: Navigate into the Project
+```bash
+# Enter the newly created project folder
+cd repository-name
+
+# Example:
+cd br-kombai-7
+```
+
+#### Step 4: Verify the Setup
+```bash
+# Check git status
+git status
+
+# View remote connections
+git remote -v
+
+# Check current branch
+git branch
+```
+
+#### Alternative: Clone into Specific Folder Name
+```bash
+# Clone into a custom folder name
+git clone https://github.com/username/repository-name.git custom-folder-name
+
+# Clone into current directory (folder must be empty)
+git clone https://github.com/username/repository-name.git .
+```
+
+#### After Cloning - Ready to Work
+```bash
+# Install dependencies (if applicable)
+npm install
+# or
+yarn install
+
+# Start development
+npm run dev
+# or
+yarn dev
+```
+
+#### Future Updates
+```bash
+# Pull latest changes from remote
+git pull
+
+# Or pull from specific branch
+git pull origin main
+```
+
 ## Troubleshooting:
 - If you have uncommitted changes, git will ask you to commit or stash them first
 - Use `git stash` to temporarily save changes, then `git stash pop` after pulling
