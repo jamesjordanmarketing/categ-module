@@ -2,24 +2,25 @@ To be done:
 
 
 Read:
-`C:\Users\james\Master\BrightHub\brun\categ-module\pmc\product\_mapping\fr-maps\04-bmo-FR-wireframes-output-E03-gather-module_v2.md`
+`C:\Users\james\Master\BrightHub\BRun\categ-module\pmc\product\01-bmo-overview.md`
+and
+`C:\Users\james\Master\BrightHub\BRun\categ-module\pmc\context-ai\pmct\04-data-gathering_v2.md`
 
-So you understand the context of this task:
+So you understand the context of this task. `C:\Users\james\Master\BrightHub\BRun\categ-module\pmc\context-ai\pmct\04-data-gathering_v2.md` also contains all of attributes needed to accurately create LoRA data training data.
 
-Your job is to create a 
+Your job is to create the next iteration of the module outlined here: `C:\Users\james\Master\BrightHub\BRun\categ-module\pmc\context-ai\pmct\04-data-gathering_v2.md`:
+This new iteration of the module has the following requirements:
 
-1. There is a dashboard dedicated to document knowledge processing. The main page for all document knowledge processing dashboard is dedicated to the presentation of the documents that have been categorized so far by the document categorization module. The main page of the document dashboard serves as an inventory of the documents that are ready to be processed for document knowledge. Include document wide knowledge metadata that is practical to display (include % of metadata completed). 
-git rev-parse --show-toplevel
+1. Dashboard dedicated to document knowledge processing. The main page for all document knowledge processing dashboard is dedicated to the presentation of the documents that have been categorized so far by the document categorization module. The main page of the document dashboard serves as an inventory of the documents that are ready to be processed for document knowledge. Include document wide knowledge metadata that is practical to display (include % of metadata completed). 
+
 2. Pressing the "Document Knowledge" button on a document leads to a document dashboard for that specific document. The dashboard uses the entire page with the name of that document file in the headline.
 
 3. It has already (in batch) scanned the document and segmented it into chapters. If natural chapters are not named in the document our AI engine will attempt to segment it into sequential chapters. It can name it's own chapters based on the sequence and topic/purpose if needed.
 Sequential "chapter" based chunks are not the only type of segments we will show in this inventory. For now lets just have one more type of chunk. The "process chunk" which is a chunk or segment that contains a proprietary process or steps (not a "framework")
 
-
 4. Selecting a chunk, segment, or chapter leads to the full metadata presentation of that chunk. The 1st page of the chunk  dashboard serves as an inventory of the attributes already or soon to be collected about that chunk.
 
 5. Overall Principles
-
 a. The current knowledge about the document is arranged in such a way that it gives the business owner client an intuitive confidence that we (Bright Run) have our hands wrapped around the document's world of knowledge we already know or the knowledge we still need (i.e. at least we know we need it). It is also interesting to the business owner user, as they have never been introduced to the concepts of a document's semantic and ontological knowledge and attributes. Labeling a document in real time also gives even them (the author usually) more information about the document.
 
 Within the design pre-design space for LOTS of tool tips. As for each attribute it will be very helpful if we can provide in depth content that explains the purpose and goals of that attribute.
@@ -32,10 +33,19 @@ i. Where possible don't collect information that can be derived from the combina
 ii. If an attribute has a low usefulness value or knowledge impact, don't collect that information. This product does not need PHD level document attribution. This is for business owners who are most concerned with speed and "good enough to do the job" quality.
 
 
-6. Read `C:\Users\james\Master\BrightHub\brun\categ-module\pmc\product\_mapping\fr-maps\04-bmo-FR-wireframes-output-E03-gather-module_v2.md` again carefully and think about how best to elegantly both present and collect the correct information about each chunk/segment/chapter. Make the information requests relevant, interesting and intuitive for the business owner. Map to LoRA needs as appropriate. Don't ask for the client to think. Where possible you have already created the correct information using our AI engine. You are mainly just asking for approval with in place editing if needed.
+6. Read `C:\Users\james\Master\BrightHub\BRun\categ-module\pmc\context-ai\pmct\04-data-gathering_v2.md` again carefully and think about how best to elegantly both present and collect the correct attributes and context about each chunk/segment/chapter. Make the information requests relevant, interesting and intuitive for the business owner. Create a LoRA attributes mapping rosetta stone as appropriate. Don't ask for the client to think. Where possible you have already created the correct information using our AI engine. You are mainly just asking for approval with in place editing if needed.
 
 
+Then read an example Figma Wireframe prompt here 
+`C:\Users\james\Master\BrightHub\brun\categ-module\pmc\product\_mapping\fr-maps\04-bmo-FR-wireframes-output-E03-gather-module_v2.md`
 
+
+Your task in this prompt is to create a Figma Wireframe prompt that matches the format, structure, content conventions, and sections of `C:\Users\james\Master\BrightHub\brun\categ-module\pmc\product\_mapping\fr-maps\04-bmo-FR-wireframes-output-E03-gather-module_v2.md`
+
+while building a wireframe prompt for the specification that I describe above in this document.
+
+Put the new Figma wireframe prompt here:
+`C:\Users\james\Master\BrightHub\brun\categ-module\pmc\product\_mapping\fr-maps\04-bmo-FR-wireframes-output-E03-gather-module_v3.md`
 
 
 
